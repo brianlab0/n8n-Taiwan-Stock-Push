@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2500 434" font-family="-apple-system,Segoe UI,Helvetica,Arial,sans-serif">
+<defs><pattern id="dots" width="22" height="22" patternUnits="userSpaceOnUse"><circle cx="1.4" cy="1.4" r="1.4" fill="#d7d9e0"/></pattern><marker id="ar"  markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#9aa0ad"/></marker><filter id="sh" x="-20%" y="-20%" width="140%" height="160%"><feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#1a1f36" flood-opacity="0.12"/></filter></defs>
+<rect x="0" y="0" width="2500" height="434" fill="#f7f8fb"/>
+<rect x="0" y="0" width="2500" height="434" fill="url(#dots)"/>
+<text x="46" y="30" font-size="18" font-weight="700" fill="#1a1f36">Brian 股票推播 — n8n workflow</text>
+<path d="M234,177.0 C274,177.0 226,267.0 260,267.0" fill="none" stroke="#9aa0ad" stroke-width="2" marker-end="url(#ar)"/>
+<path d="M234,357.0 C274,357.0 226,267.0 260,267.0" fill="none" stroke="#9aa0ad" stroke-width="2" marker-end="url(#ar)"/>
+<path d="M454,267.0 C494,267.0 426,267.0 460,267.0" fill="none" stroke="#9aa0ad" stroke-width="2" marker-end="url(#ar)"/>
+<path d="M654,267.0 C694,267.0 626,267.0 660,267.0" fill="none" stroke="#9aa0ad" stroke-width="2" marker-end="url(#ar)"/>
+<path d="M854,267.0 C894,267.0 826,77.0 860,77.0" fill="none" stroke="#9aa0ad" stroke-width="2" marker-end="url(#ar)"/>
+<path d="M1054,77.0 C1094,77.0 826,267.0 860,267.0" fill="none" stroke="#9aa0ad" stroke-width="2" marker-end="url(#ar)"/>
+<path d="M1054,267.0 C1094,267.0 1026,267.0 1060,267.0" fill="none" stroke="#9aa0ad" stroke-width="2" marker-end="url(#ar)"/>
+<path d="M1254,267.0 C1294,267.0 1226,267.0 1260,267.0" fill="none" stroke="#9aa0ad" stroke-width="2" marker-end="url(#ar)"/>
+<path d="M1454,267.0 C1494,267.0 1226,77.0 1260,77.0" fill="none" stroke="#9aa0ad" stroke-width="2" marker-end="url(#ar)"/>
+<path d="M1454,77.0 C1494,77.0 1426,177.0 1460,177.0" fill="none" stroke="#9aa0ad" stroke-width="2" marker-end="url(#ar)"/>
+<path d="M1654,177.0 C1694,177.0 1626,177.0 1660,177.0" fill="none" stroke="#9aa0ad" stroke-width="2" marker-end="url(#ar)"/>
+<path d="M1854,177.0 C1894,177.0 1826,177.0 1860,177.0" fill="none" stroke="#9aa0ad" stroke-width="2" marker-end="url(#ar)"/>
+<path d="M2054,177.0 C2094,177.0 2026,177.0 2060,177.0" fill="none" stroke="#9aa0ad" stroke-width="2" marker-end="url(#ar)"/>
+<path d="M2254,177.0 C2294,177.0 2226,177.0 2260,177.0" fill="none" stroke="#9aa0ad" stroke-width="2" marker-end="url(#ar)"/>
+<g filter="url(#sh)"><rect x="46" y="146" width="188" height="62" rx="10" fill="#ffffff" stroke="#e3e5ec"/></g>
+<rect x="46" y="146" width="6" height="62" rx="3" fill="#ff6d5a"/>
+<rect x="62" y="159" width="14" height="14" rx="4" fill="#ff6d5a"/>
+<text x="86" y="170" font-size="13.5" font-weight="700" fill="#1a1f36">每日排程</text>
+<text x="86" y="188" font-size="10.5" fill="#6b7280">Schedule Trigger · 16:00</text>
+<text x="224" y="164" font-size="8.5" font-weight="700" fill="#ff6d5a" text-anchor="end" letter-spacing="0.5">TRIGGER</text>
+<g filter="url(#sh)"><rect x="46" y="326" width="188" height="62" rx="10" fill="#ffffff" stroke="#e3e5ec"/></g>
+<rect x="46" y="326" width="6" height="62" rx="3" fill="#ff9f43"/>
+<rect x="62" y="339" width="14" height="14" rx="4" fill="#ff9f43"/>
+<text x="86" y="350" font-size="13.5" font-weight="700" fill="#1a1f36">手動測試</text>
+<text x="86" y="368" font-size="10.5" fill="#6b7280">Manual Trigger</text>
+<text x="224" y="344" font-size="8.5" font-weight="700" fill="#ff9f43" text-anchor="end" letter-spacing="0.5">TRIGGER</text>
+<g filter="url(#sh)"><rect x="266" y="236" width="188" height="62" rx="10" fill="#ffffff" stroke="#e3e5ec"/></g>
+<rect x="266" y="236" width="6" height="62" rx="3" fill="#5b67f0"/>
+<rect x="282" y="249" width="14" height="14" rx="4" fill="#5b67f0"/>
+<text x="306" y="260" font-size="13.5" font-weight="700" fill="#1a1f36">定義分類標的</text>
+<text x="306" y="278" font-size="10.5" fill="#6b7280">Define Universe</text>
+<text x="444" y="254" font-size="8.5" font-weight="700" fill="#5b67f0" text-anchor="end" letter-spacing="0.5">CODE</text>
+<g filter="url(#sh)"><rect x="466" y="236" width="188" height="62" rx="10" fill="#ffffff" stroke="#e3e5ec"/></g>
+<rect x="466" y="236" width="6" height="62" rx="3" fill="#8b5cf6"/>
+<rect x="482" y="249" width="14" height="14" rx="4" fill="#8b5cf6"/>
+<text x="506" y="260" font-size="13.5" font-weight="700" fill="#1a1f36">抓取行情</text>
+<text x="506" y="278" font-size="10.5" fill="#6b7280">Fetch Quotes · Yahoo</text>
+<text x="644" y="254" font-size="8.5" font-weight="700" fill="#8b5cf6" text-anchor="end" letter-spacing="0.5">HTTP</text>
+<g filter="url(#sh)"><rect x="666" y="236" width="188" height="62" rx="10" fill="#ffffff" stroke="#e3e5ec"/></g>
+<rect x="666" y="236" width="6" height="62" rx="3" fill="#5b67f0"/>
+<rect x="682" y="249" width="14" height="14" rx="4" fill="#5b67f0"/>
+<text x="706" y="260" font-size="13.5" font-weight="700" fill="#1a1f36">整理分類行情</text>
+<text x="706" y="278" font-size="10.5" fill="#6b7280">Organize · ZH names, trading-day</text>
+<text x="844" y="254" font-size="8.5" font-weight="700" fill="#5b67f0" text-anchor="end" letter-spacing="0.5">CODE</text>
+<g filter="url(#sh)"><rect x="866" y="46" width="188" height="62" rx="10" fill="#ffffff" stroke="#e3e5ec"/></g>
+<rect x="866" y="46" width="6" height="62" rx="3" fill="#8b5cf6"/>
+<rect x="882" y="59" width="14" height="14" rx="4" fill="#8b5cf6"/>
+<text x="906" y="70" font-size="13.5" font-weight="700" fill="#1a1f36">抓三大法人</text>
+<text x="906" y="88" font-size="10.5" fill="#6b7280">Institutions · TWSE</text>
+<text x="1044" y="64" font-size="8.5" font-weight="700" fill="#8b5cf6" text-anchor="end" letter-spacing="0.5">HTTP</text>
+<g filter="url(#sh)"><rect x="866" y="236" width="188" height="62" rx="10" fill="#ffffff" stroke="#e3e5ec"/></g>
+<rect x="866" y="236" width="6" height="62" rx="3" fill="#5b67f0"/>
+<rect x="882" y="249" width="14" height="14" rx="4" fill="#5b67f0"/>
+<text x="906" y="260" font-size="13.5" font-weight="700" fill="#1a1f36">定義技術標的</text>
+<text x="906" y="278" font-size="10.5" fill="#6b7280">Define Tech Symbols</text>
+<text x="1044" y="254" font-size="8.5" font-weight="700" fill="#5b67f0" text-anchor="end" letter-spacing="0.5">CODE</text>
+<g filter="url(#sh)"><rect x="1066" y="236" width="188" height="62" rx="10" fill="#ffffff" stroke="#e3e5ec"/></g>
+<rect x="1066" y="236" width="6" height="62" rx="3" fill="#8b5cf6"/>
+<rect x="1082" y="249" width="14" height="14" rx="4" fill="#8b5cf6"/>
+<text x="1106" y="260" font-size="13.5" font-weight="700" fill="#1a1f36">抓技術歷史</text>
+<text x="1106" y="278" font-size="10.5" fill="#6b7280">Fetch History · Yahoo</text>
+<text x="1244" y="254" font-size="8.5" font-weight="700" fill="#8b5cf6" text-anchor="end" letter-spacing="0.5">HTTP</text>
+<g filter="url(#sh)"><rect x="1266" y="236" width="188" height="62" rx="10" fill="#ffffff" stroke="#e3e5ec"/></g>
+<rect x="1266" y="236" width="6" height="62" rx="3" fill="#5b67f0"/>
+<rect x="1282" y="249" width="14" height="14" rx="4" fill="#5b67f0"/>
+<text x="1306" y="260" font-size="13.5" font-weight="700" fill="#1a1f36">算技術與法人</text>
+<text x="1306" y="278" font-size="10.5" fill="#6b7280">MA / RSI + Institutions</text>
+<text x="1444" y="254" font-size="8.5" font-weight="700" fill="#5b67f0" text-anchor="end" letter-spacing="0.5">CODE</text>
+<g filter="url(#sh)"><rect x="1266" y="46" width="188" height="62" rx="10" fill="#ffffff" stroke="#e3e5ec"/></g>
+<rect x="1266" y="46" width="6" height="62" rx="3" fill="#8b5cf6"/>
+<rect x="1282" y="59" width="14" height="14" rx="4" fill="#8b5cf6"/>
+<text x="1306" y="70" font-size="13.5" font-weight="700" fill="#1a1f36">搜尋台股新聞</text>
+<text x="1306" y="88" font-size="10.5" fill="#6b7280">News · Tavily</text>
+<text x="1444" y="64" font-size="8.5" font-weight="700" fill="#8b5cf6" text-anchor="end" letter-spacing="0.5">HTTP</text>
+<g filter="url(#sh)"><rect x="1466" y="146" width="188" height="62" rx="10" fill="#ffffff" stroke="#e3e5ec"/></g>
+<rect x="1466" y="146" width="6" height="62" rx="3" fill="#5b67f0"/>
+<rect x="1482" y="159" width="14" height="14" rx="4" fill="#5b67f0"/>
+<text x="1506" y="170" font-size="13.5" font-weight="700" fill="#1a1f36">整合資料</text>
+<text x="1506" y="188" font-size="10.5" fill="#6b7280">Integrate · build prompt</text>
+<text x="1644" y="164" font-size="8.5" font-weight="700" fill="#5b67f0" text-anchor="end" letter-spacing="0.5">CODE</text>
+<g filter="url(#sh)"><rect x="1666" y="146" width="188" height="62" rx="10" fill="#ffffff" stroke="#e3e5ec"/></g>
+<rect x="1666" y="146" width="6" height="62" rx="3" fill="#8b5cf6"/>
+<rect x="1682" y="159" width="14" height="14" rx="4" fill="#8b5cf6"/>
+<text x="1706" y="170" font-size="13.5" font-weight="700" fill="#1a1f36">Groq AI 分析</text>
+<text x="1706" y="188" font-size="10.5" fill="#6b7280">Groq Llama 3.3 70B</text>
+<text x="1844" y="164" font-size="8.5" font-weight="700" fill="#8b5cf6" text-anchor="end" letter-spacing="0.5">HTTP</text>
+<g filter="url(#sh)"><rect x="1866" y="146" width="188" height="62" rx="10" fill="#ffffff" stroke="#e3e5ec"/></g>
+<rect x="1866" y="146" width="6" height="62" rx="3" fill="#5b67f0"/>
+<rect x="1882" y="159" width="14" height="14" rx="4" fill="#5b67f0"/>
+<text x="1906" y="170" font-size="13.5" font-weight="700" fill="#1a1f36">生成雜誌風 HTML</text>
+<text x="1906" y="188" font-size="10.5" fill="#6b7280">Generate HTML</text>
+<text x="2044" y="164" font-size="8.5" font-weight="700" fill="#5b67f0" text-anchor="end" letter-spacing="0.5">CODE</text>
+<g filter="url(#sh)"><rect x="2066" y="146" width="188" height="62" rx="10" fill="#ffffff" stroke="#e3e5ec"/></g>
+<rect x="2066" y="146" width="6" height="62" rx="3" fill="#5b67f0"/>
+<rect x="2082" y="159" width="14" height="14" rx="4" fill="#5b67f0"/>
+<text x="2106" y="170" font-size="13.5" font-weight="700" fill="#1a1f36">分割收件人</text>
+<text x="2106" y="188" font-size="10.5" fill="#6b7280">Trading-Day Gate</text>
+<text x="2244" y="164" font-size="8.5" font-weight="700" fill="#5b67f0" text-anchor="end" letter-spacing="0.5">CODE</text>
+<g filter="url(#sh)"><rect x="2266" y="146" width="188" height="62" rx="10" fill="#ffffff" stroke="#e3e5ec"/></g>
+<rect x="2266" y="146" width="6" height="62" rx="3" fill="#14b8a6"/>
+<rect x="2282" y="159" width="14" height="14" rx="4" fill="#14b8a6"/>
+<text x="2306" y="170" font-size="13.5" font-weight="700" fill="#1a1f36">寄送郵件 (BCC)</text>
+<text x="2306" y="188" font-size="10.5" fill="#6b7280">Email Send · SMTP</text>
+<text x="2444" y="164" font-size="8.5" font-weight="700" fill="#14b8a6" text-anchor="end" letter-spacing="0.5">EMAIL</text>
+</svg>
