@@ -1,0 +1,449 @@
+{
+  "name": "Brian 股票推播 (Taiwan Stock Push)",
+  "nodes": [
+    {
+      "id": "trigger-schedule",
+      "name": "每日排程",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        220,
+        300
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 16 * * 1-5"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "trigger-manual",
+      "name": "手動測試",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        220,
+        480
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "define-symbols",
+      "name": "定義分類標的",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        390
+      ],
+      "parameters": {
+        "jsCode": "// 選股池(代號 + 中文名)\nconst list = [\n  { symbol: '^TWII', name: '台股加權' },\n  { symbol: '2330.TW', name: '台積電' },\n  { symbol: '2454.TW', name: '聯發科' },\n  { symbol: '2303.TW', name: '聯電' },\n  { symbol: '3711.TW', name: '日月光投控' },\n  { symbol: '2379.TW', name: '瑞昱' },\n  { symbol: '2317.TW', name: '鴻海' },\n  { symbol: '2382.TW', name: '廣達' },\n  { symbol: '2357.TW', name: '華碩' },\n  { symbol: '3231.TW', name: '緯創' },\n  { symbol: '4938.TW', name: '和碩' },\n  { symbol: '2308.TW', name: '台達電' },\n  { symbol: '3008.TW', name: '大立光' },\n  { symbol: '2327.TW', name: '國巨' },\n  { symbol: '2881.TW', name: '富邦金' },\n  { symbol: '2882.TW', name: '國泰金' },\n  { symbol: '2891.TW', name: '中信金' },\n  { symbol: '2886.TW', name: '兆豐金' },\n  { symbol: '2884.TW', name: '玉山金' },\n  { symbol: '1301.TW', name: '台塑' },\n  { symbol: '1303.TW', name: '南亞' },\n  { symbol: '6505.TW', name: '台塑化' },\n  { symbol: '2002.TW', name: '中鋼' },\n  { symbol: '1101.TW', name: '台泥' },\n  { symbol: '1102.TW', name: '亞泥' },\n  { symbol: '2603.TW', name: '長榮' },\n  { symbol: '2609.TW', name: '陽明' },\n  { symbol: '2615.TW', name: '萬海' },\n  { symbol: '2610.TW', name: '華航' },\n  { symbol: '2618.TW', name: '長榮航' },\n  { symbol: '1402.TW', name: '遠東新' },\n  { symbol: '1476.TW', name: '儒鴻' },\n  { symbol: '1216.TW', name: '統一' },\n  { symbol: '2412.TW', name: '中華電' },\n  { symbol: '3045.TW', name: '台灣大' },\n  { symbol: '4904.TW', name: '遠傳' },\n  { symbol: '6446.TW', name: '藥華藥' },\n  { symbol: '1795.TW', name: '美時' },\n  { symbol: '2912.TW', name: '統一超' },\n  { symbol: '2707.TW', name: '晶華' },\n  { symbol: '2207.TW', name: '和泰車' },\n  { symbol: '9921.TW', name: '巨大' },\n  { symbol: '2542.TW', name: '興富發' },\n  { symbol: '0050.TW', name: '元大台灣50' },\n  { symbol: '0056.TW', name: '元大高股息' },\n  { symbol: '00878.TW', name: '國泰永續高股息' },\n];\nreturn list.map(x => ({ json: x }));\n"
+      }
+    },
+    {
+      "id": "fetch-quotes",
+      "name": "抓取行情",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        640,
+        390
+      ],
+      "onError": "continueRegularOutput",
+      "parameters": {
+        "method": "GET",
+        "url": "=https://query1.finance.yahoo.com/v8/finance/chart/{{ encodeURIComponent($json.symbol) }}?range=1d&interval=1d",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "organize-market",
+      "name": "整理分類行情",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        840,
+        390
+      ],
+      "parameters": {
+        "jsCode": "// 整理行情 + 中文名 + 正確資料日期/交易日判斷\nconst UNIVERSE = [\n  { s: '^TWII', n: '台股加權', c: '指數' },\n  { s: '2330.TW', n: '台積電', c: '半導體' },\n  { s: '2454.TW', n: '聯發科', c: '半導體' },\n  { s: '2303.TW', n: '聯電', c: '半導體' },\n  { s: '3711.TW', n: '日月光投控', c: '半導體' },\n  { s: '2379.TW', n: '瑞昱', c: '半導體' },\n  { s: '2317.TW', n: '鴻海', c: '電子' },\n  { s: '2382.TW', n: '廣達', c: '電子' },\n  { s: '2357.TW', n: '華碩', c: '電子' },\n  { s: '3231.TW', n: '緯創', c: '電子' },\n  { s: '4938.TW', n: '和碩', c: '電子' },\n  { s: '2308.TW', n: '台達電', c: '電子' },\n  { s: '3008.TW', n: '大立光', c: '光學' },\n  { s: '2327.TW', n: '國巨', c: '被動元件' },\n  { s: '2881.TW', n: '富邦金', c: '金融' },\n  { s: '2882.TW', n: '國泰金', c: '金融' },\n  { s: '2891.TW', n: '中信金', c: '金融' },\n  { s: '2886.TW', n: '兆豐金', c: '金融' },\n  { s: '2884.TW', n: '玉山金', c: '金融' },\n  { s: '1301.TW', n: '台塑', c: '塑化' },\n  { s: '1303.TW', n: '南亞', c: '塑化' },\n  { s: '6505.TW', n: '台塑化', c: '塑化' },\n  { s: '2002.TW', n: '中鋼', c: '鋼鐵' },\n  { s: '1101.TW', n: '台泥', c: '水泥' },\n  { s: '1102.TW', n: '亞泥', c: '水泥' },\n  { s: '2603.TW', n: '長榮', c: '航運' },\n  { s: '2609.TW', n: '陽明', c: '航運' },\n  { s: '2615.TW', n: '萬海', c: '航運' },\n  { s: '2610.TW', n: '華航', c: '航空' },\n  { s: '2618.TW', n: '長榮航', c: '航空' },\n  { s: '1402.TW', n: '遠東新', c: '紡織' },\n  { s: '1476.TW', n: '儒鴻', c: '紡織' },\n  { s: '1216.TW', n: '統一', c: '食品' },\n  { s: '2412.TW', n: '中華電', c: '電信' },\n  { s: '3045.TW', n: '台灣大', c: '電信' },\n  { s: '4904.TW', n: '遠傳', c: '電信' },\n  { s: '6446.TW', n: '藥華藥', c: '生技' },\n  { s: '1795.TW', n: '美時', c: '生技' },\n  { s: '2912.TW', n: '統一超', c: '零售' },\n  { s: '2707.TW', n: '晶華', c: '觀光' },\n  { s: '2207.TW', n: '和泰車', c: '汽車' },\n  { s: '9921.TW', n: '巨大', c: '自行車' },\n  { s: '2542.TW', n: '興富發', c: '營建' },\n  { s: '0050.TW', n: '元大台灣50', c: 'ETF' },\n  { s: '0056.TW', n: '元大高股息', c: 'ETF' },\n  { s: '00878.TW', n: '國泰永續高股息', c: 'ETF' },\n];\nconst nameMap = {}, categoryMap = {}, categories = {};\nUNIVERSE.forEach(u => { nameMap[u.s] = u.n; categoryMap[u.s] = u.c; if (!categories[u.c]) categories[u.c] = []; });\n\nconst items = $input.all();\nconst marketData = [];\nlet lastMarketTime = 0;\n\nfor (const item of items) {\n  try {\n    const result = item.json.chart.result[0];\n    const meta = result.meta;\n    const symbol = meta.symbol;\n    const price = meta.regularMarketPrice || 0;\n    const prevClose = meta.chartPreviousClose !== undefined ? meta.chartPreviousClose :\n                      meta.previousClose !== undefined ? meta.previousClose : price;\n    const pct = prevClose > 0 ? ((price - prevClose) / prevClose * 100) : 0;\n    if (meta.regularMarketTime && meta.regularMarketTime > lastMarketTime) lastMarketTime = meta.regularMarketTime;\n    const data = {\n      symbol,\n      name: nameMap[symbol] || symbol,\n      price: Number(price.toFixed(2)),\n      prevClose: Number(prevClose.toFixed(2)),\n      pct: Number(pct.toFixed(2)),\n      change: Number((price - prevClose).toFixed(2)),\n      volume: meta.regularMarketVolume || 0,\n      category: categoryMap[symbol] || '其他'\n    };\n    marketData.push(data);\n    if (categories[data.category]) categories[data.category].push(data);\n  } catch (e) {}\n}\n\nconst categoryStats = {};\nObject.entries(categories).forEach(([cat, list]) => {\n  if (list.length > 0) {\n    const avgPct = list.reduce((s, i) => s + i.pct, 0) / list.length;\n    categoryStats[cat] = {\n      avgPct: Number(avgPct.toFixed(2)),\n      upCount: list.filter(i => i.pct > 0).length,\n      totalCount: list.length,\n      items: list.sort((a, b) => b.pct - a.pct)\n    };\n  }\n});\n\nconst ymd = (ms) => {\n  const d = new Date(ms + 8 * 3600 * 1000);\n  return d.getUTCFullYear() + '-' + String(d.getUTCMonth() + 1).padStart(2, '0') + '-' + String(d.getUTCDate()).padStart(2, '0');\n};\nlet dataDate, displayDate, isTradingDay = false;\nif (lastMarketTime) {\n  dataDate = ymd(lastMarketTime * 1000);\n  displayDate = dataDate.replace(/-/g, '/');\n  isTradingDay = (dataDate === ymd(Date.now()));\n} else {\n  dataDate = ymd(Date.now());\n  displayDate = dataDate.replace(/-/g, '/');\n}\n\nreturn [{ json: { marketData, categories, categoryStats, isTradingDay, dataDate, displayDate } }];\n"
+      }
+    },
+    {
+      "id": "fetch-institutions",
+      "name": "抓三大法人",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1040,
+        200
+      ],
+      "onError": "continueRegularOutput",
+      "parameters": {
+        "method": "GET",
+        "url": "=https://www.twse.com.tw/rwd/zh/fund/BFI82U?dayDate={{ $('整理分類行情').first().json.dataDate.split('-').join('') }}&type=day&response=json",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "define-tech-symbols",
+      "name": "定義技術標的",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1040,
+        390
+      ],
+      "parameters": {
+        "jsCode": "// 要做技術分析的標的(抓 6 個月歷史來算均線 / RSI)\nconst list = [\n  { symbol: '^TWII',   name: '台股加權' },\n  { symbol: '2330.TW', name: '台積電' },\n  { symbol: '0050.TW', name: '元大台灣50' },\n];\nreturn list.map(x => ({ json: x }));\n"
+      }
+    },
+    {
+      "id": "fetch-tech-history",
+      "name": "抓技術歷史",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1240,
+        390
+      ],
+      "onError": "continueRegularOutput",
+      "parameters": {
+        "method": "GET",
+        "url": "=https://query1.finance.yahoo.com/v8/finance/chart/{{ encodeURIComponent($json.symbol) }}?range=6mo&interval=1d",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "calc-tech-indicators",
+      "name": "算技術與法人",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1440,
+        390
+      ],
+      "parameters": {
+        "jsCode": "const techSymbols = $input.all();\nconst fac = (() => {\n  try {\n    const facData = $('抓三大法人').first().json;\n    const rows = facData && facData.data;\n    if (!Array.isArray(rows) || rows.length === 0) return null;\n    const num = (s) => Number(String(s == null ? '' : s).replace(/,/g, '')) || 0;\n    let dealer = 0, trust = 0, foreign = 0;\n    for (const r of rows) {\n      const label = String(r[0] || '');\n      const net = num(r[3]);\n      if (label.indexOf('合計') === 0) continue;\n      if (label.indexOf('外資') === 0) foreign += net;\n      else if (label.indexOf('投信') === 0) trust += net;\n      else if (label.indexOf('自營商') === 0) dealer += net;\n    }\n    const oku = (v) => Number((v / 1e8).toFixed(2));\n    if (foreign === 0 && trust === 0 && dealer === 0) return null;\n    return { foreign: oku(foreign), trust: oku(trust), dealer: oku(dealer),\n             total: oku(foreign + trust + dealer) };\n  } catch (e) { return null; }\n})();\n\nconst tech = [];\nfor (const item of techSymbols) {\n  try {\n    const result = item.json.chart.result[0];\n    const closes = result.indicators.quote[0].close.filter(c => c);\n    const meta = result.meta;\n    \n    if (closes.length < 60) continue;\n    \n    const ma5 = (closes.slice(-5).reduce((a,b) => a+b, 0) / 5).toFixed(0);\n    const ma20 = (closes.slice(-20).reduce((a,b) => a+b, 0) / 20).toFixed(0);\n    const ma60 = (closes.slice(-60).reduce((a,b) => a+b, 0) / 60).toFixed(0);\n    \n    const rsi = (() => {\n      const n = 14;\n      let gains = 0, losses = 0;\n      for (let i = closes.length - n; i < closes.length; i++) {\n        const diff = closes[i] - closes[i-1];\n        if (diff > 0) gains += diff;\n        else losses -= diff;\n      }\n      const rs = losses > 0 ? gains / losses : gains > 0 ? 100 : 0;\n      return 100 - (100 / (1 + rs));\n    })();\n    \n    tech.push({\n      name: meta.symbol,\n      price: closes[closes.length - 1],\n      ma5, ma20, ma60,\n      rsi,\n      trend: ma5 > ma20 && ma20 > ma60 ? '多頭排列' : '空頭排列'\n    });\n  } catch (e) {}\n}\n\nreturn [{ json: { tech, fac } }];\n"
+      }
+    },
+    {
+      "id": "search-news",
+      "name": "搜尋台股新聞",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1440,
+        200
+      ],
+      "onError": "continueRegularOutput",
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.tavily.com/search",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"api_key\": \"{{ $env.TAVILY_API_KEY }}\",\n  \"query\": \"台股 加權指數 台積電 法人買賣 盤勢 投資 股票\",\n  \"topic\": \"news\",\n  \"search_depth\": \"advanced\",\n  \"max_results\": 10,\n  \"days\": 3\n}"
+      }
+    },
+    {
+      "id": "integrate-data",
+      "name": "整合資料",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1640,
+        300
+      ],
+      "parameters": {
+        "jsCode": "const market = $('整理分類行情').first().json;\nconst marketData = market.marketData || [];\nconst categoryStats = market.categoryStats || {};\nconst tf = (() => { try { return $('算技術與法人').first().json; } catch (e) { return { tech: [], fac: null }; } })();\n\nconst tickerOf = (sym) => String(sym).replace(/\\.TWO?$/, '').replace('^', '');\n\n// 候選股(排除指數，且必須有真實現價)\nconst candidates = marketData\n  .filter(m => !String(m.symbol).startsWith('^') && m.price > 0)\n  .map(m => ({ ticker: tickerOf(m.symbol), name: m.name, price: m.price, pct: m.pct, category: m.category }));\n\nconst candText = candidates\n  .map(c => `${c.ticker} ${c.name}｜現價 ${c.price}｜當日 ${c.pct >= 0 ? '+' : ''}${c.pct}%｜${c.category}`)\n  .join('\\n');\n\nconst techText = (tf.tech || []).map(t => {\n  const bull = Number(t.ma5) > Number(t.ma20) && Number(t.ma20) > Number(t.ma60);\n  return `${tickerOf(t.name)}｜MA5 ${t.ma5}／MA20 ${t.ma20}／MA60 ${t.ma60}｜RSI ${Number(t.rsi).toFixed(0)}｜${bull ? '多頭排列' : '均線糾結/偏弱'}`;\n}).join('\\n') || '無';\n\nconst facText = tf.fac\n  ? `外資 ${tf.fac.foreign} 億、投信 ${tf.fac.trust} 億、自營商 ${tf.fac.dealer} 億、合計 ${tf.fac.total} 億`\n  : '暫無';\n\nconst catText = Object.entries(categoryStats)\n  .map(([c, s]) => `${c} 平均 ${s.avgPct}%（上漲 ${s.upCount}/${s.totalCount}）`).join('\\n');\n\nconst total = marketData.length;\nconst up = marketData.filter(m => m.pct > 0).length;\nconst down = marketData.filter(m => m.pct < 0).length;\nconst flat = marketData.filter(m => m.pct === 0).length;\n\nconst newsDetails = [];\nfor (const it of $('搜尋台股新聞').all()) {\n  for (const r of (it.json.results || []).slice(0, 8)) {\n    if (r && r.title) newsDetails.push({ title: r.title, url: r.url });\n  }\n}\nconst topNews = newsDetails.slice(0, 6);\n\nconst systemPrompt = `你是專業的台股分析師。你只能從「候選股清單」中挑選推薦標的（嚴禁挑清單以外的股票），且不要自行猜測目標價或停損價（系統會依真實現價計算）。輸出繁體中文 JSON：\n{\n \"market_summary\":\"一句話總結今日盤勢（40字內，需呼應上漲/下跌家數）\",\n \"buy_recommendations\":[{\"ticker\":\"2330\",\"name\":\"台積電\",\"reason\":\"詳細的買進依據，需涵蓋：該股當日漲跌表現、所屬產業題材或基本面、以及技術面/法人動向，寫成完整 2-3 句、約 60-90 字\",\"confidence\":\"高/中/低\"}],\n \"sell_recommendations\":[{\"ticker\":\"2317\",\"name\":\"鴻海\",\"reason\":\"詳細的減碼依據，需涵蓋：當日弱勢表現、產業面利空或轉弱訊號、技術面風險，寫成完整 2-3 句、約 60-90 字\"}],\n \"news_digest\":[\"第1則新聞2-3句客觀摘要\",\"...\"],\n \"investment_tip\":{\"concept\":\"一個財金或投資名詞（每天換一個，例：本益比、殖利率、移動平均線、RSI、停損、護城河、複利、ETF 折溢價）\",\"detail\":\"用白話解釋這個名詞的意思與用途，並帶一個含數字的簡單例子（90字內）\"},\n \"one_liner\":\"一句話操作總結（30字內）\"\n}\n規則：buy 給 10 檔、sell 給 10 檔，務必分散在不同產業(半導體、電子、金融、塑化、鋼鐵、航運、航空、紡織、食品、電信、生技、觀光、汽車、營建、ETF 等)，不要全部集中在台積電等大型權值股，盡量納入中小型與傳產股，買進與賣出標的不可重複；ticker 與 name 必須和候選股清單完全一致；每檔的 reason 都要寫詳細(完整 2-3 句、約 60-90 字)，引用清單中的真實數字（當日漲跌%）並結合產業題材與技術面，不可只寫一句話；news_digest 長度與順序需對應提供的新聞；market_summary 與 one_liner 請用「全面／多數／普遍」等詞描述漲跌廣度，不要寫出任何「N 檔」之類的追蹤檔數數字；只輸出 JSON。`;\n\nconst userPrompt = `【今日盤勢廣度】\\n上漲 ${up} 檔、下跌 ${down} 檔、平盤 ${flat} 檔（供你判斷，回覆時請勿直接寫出總檔數）\\n\\n【類股表現】\\n${catText}\\n\\n【候選股清單（只能從這裡挑選推薦）】\\n${candText}\\n\\n【技術面】\\n${techText}\\n\\n【三大法人（全市場合計）】\\n${facText}\\n\\n【今日新聞（請依序產生 news_digest）】\\n${topNews.map((n, i) => `${i + 1}. ${n.title}`).join('\\n')}`;\n\nreturn [{\n  json: {\n    newsDetails: topNews,\n    candidates,\n    requestBody: {\n      model: 'llama-3.3-70b-versatile',\n      temperature: 0.4,\n      max_tokens: 3500,\n      response_format: { type: 'json_object' },\n      messages: [\n        { role: 'system', content: systemPrompt },\n        { role: 'user', content: userPrompt },\n      ],\n    }\n  }\n}];\n"
+      }
+    },
+    {
+      "id": "groq-analysis",
+      "name": "Groq AI 分析",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1840,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ 'Bearer ' + $env.GROQ_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.requestBody) }}"
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 6000
+    },
+    {
+      "id": "generate-html",
+      "name": "生成雜誌風 HTML",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2040,
+        300
+      ],
+      "parameters": {
+        "jsCode": "const md = $('整理分類行情').first().json;\nconst marketData = md.marketData || [];\n\nconst newsDetails = (() => { try { return $('整合資料').first().json.newsDetails || []; } catch (e) { return []; } })();\nconst resp = $input.first().json;\nlet ai = {};\ntry { ai = JSON.parse(resp.choices[0].message.content); } catch (e) { ai = {}; }\n\nconst today = md.displayDate || new Date().toLocaleDateString('zh-TW', { timeZone: 'Asia/Taipei', year: 'numeric', month: '2-digit', day: '2-digit' });\nconst esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');\n\nconst up = '#c0392b', down = '#1f8b4c', ink = '#1a1a1a', sub = '#444444', faint = '#8a8a8a', rule = '#dcdcdc';\nconst SERIF = \"Georgia,'Times New Roman','Songti TC','Noto Serif TC','Source Han Serif TC',serif\";\nconst pcol = (p) => p > 0 ? up : p < 0 ? down : faint;\nconst ptxt = (p) => (p > 0 ? '+' : '') + Number(p).toFixed(2) + '%';\nconst roundPx = (v) => v < 50 ? Number(v.toFixed(2)) : v < 500 ? Number(v.toFixed(1)) : Math.round(v);\nconst fmt = (v) => Number(v).toLocaleString();\n\nconst priceMap = {};\nmarketData.forEach(m => { priceMap[String(m.symbol).replace(/\\.TWO?$/, '').replace('^', '')] = m; });\nconst lookup = (t) => priceMap[String(t)] || priceMap[String(t).replace(/\\D/g, '')] || null;\n\nconst sec = (n, t) => `<div style=\"font-size:18px;font-weight:700;color:${ink};margin:34px 0 4px;font-family:${SERIF};\">${n}　${t}</div>\n  <div style=\"border-bottom:1.5px solid ${ink};margin-bottom:6px;\"></div>`;\n\n// 個股一列(買進:含目標停損;賣出:僅理由)\nconst stockRow = (idx, r, buy) => {\n  const m = lookup(r.ticker);\n  const px = m ? m.price : null;\n  const priceTxt = m ? `現價 ${fmt(px)}（<span style=\"color:${pcol(m.pct)};\">${ptxt(m.pct)}</span>）` : '';\n  let tail = '';\n  if (buy && px != null) {\n    tail = `<span style=\"color:${faint};\">｜ 目標 <span style=\"color:${up};\">${fmt(roundPx(px * 1.08))}</span>／停損 <span style=\"color:${down};\">${fmt(roundPx(px * 0.94))}</span>／把握度 ${esc(r.confidence || '中')}</span>`;\n  }\n  return `<div style=\"padding:13px 2px;border-bottom:1px solid ${rule};\">\n    <div style=\"font-size:16px;color:${ink};line-height:1.55;font-family:${SERIF};\">\n      <span style=\"color:${faint};\">${idx}.</span> <b>${esc(r.name)}</b> <span style=\"color:${faint};font-size:13px;\">${esc(r.ticker)}</span>　${priceTxt}\n    </div>\n    <div style=\"font-size:13px;color:${sub};line-height:1.8;margin-top:5px;font-family:${SERIF};\">${esc(r.reason || '')}　${tail}</div>\n  </div>`;\n};\n\nlet html = `<!DOCTYPE html><html lang=\"zh-TW\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>Brian 股票推播</title></head>\n<body style=\"margin:0;padding:0;background:#eeeeee;\">\n<div style=\"max-width:640px;margin:0 auto;background:#ffffff;padding:34px 26px 30px;font-family:${SERIF};color:${ink};\">\n\n<div style=\"text-align:center;padding:2px 0 16px;border-bottom:2.5px solid ${ink};margin-bottom:6px;\">\n  <div style=\"font-size:28px;font-weight:700;letter-spacing:1px;color:${ink};\">Brian 股票推播</div>\n  <div style=\"font-size:13px;color:${sub};margin-top:8px;letter-spacing:1px;\">${today}　台股盤後速報</div>\n</div>`;\n\n// 買進\nconst buys = (ai.buy_recommendations || []).slice(0, 10);\nhtml += sec('I', '今日買進建議');\nif (buys.length) {\n  buys.forEach((b, i) => { html += stockRow(i + 1, b, true); });\n  html += `<div style=\"font-size:11px;color:${faint};margin:8px 0 0;line-height:1.7;\">＊目標／停損為依當日現價之機械試算（+8%／−6%），僅供參考，非投資建議。</div>`;\n} else {\n  html += `<div style=\"font-size:14px;color:${sub};padding:12px 0;\">今日暫無明確買進標的。</div>`;\n}\n\n// 賣出\nconst sells = (ai.sell_recommendations || []).slice(0, 10);\nhtml += sec('II', '今日賣出建議');\nif (sells.length) {\n  sells.forEach((s, i) => { html += stockRow(i + 1, s, false); });\n} else {\n  html += `<div style=\"font-size:14px;color:${sub};padding:12px 0;\">今日暫無明確賣出標的。</div>`;\n}\n\n// 市場新聞\nconst digest = ai.news_digest || [];\nif (newsDetails.length) {\n  html += sec('III', '市場新聞');\n  newsDetails.slice(0, 5).forEach((n, i) => {\n    const summary = digest[i] || '';\n    html += `<div style=\"padding:13px 2px;border-bottom:1px solid ${rule};\">\n      <div style=\"font-size:15px;font-weight:700;color:${ink};line-height:1.55;\">${esc(n.title)}</div>\n      ${summary ? `<div style=\"font-size:13px;color:${sub};line-height:1.8;margin-top:5px;\">${esc(summary)}</div>` : ''}\n      <a href=\"${esc(n.url)}\" style=\"display:inline-block;margin-top:7px;font-size:12px;color:#5a6f8c;text-decoration:underline;\">閱讀全文</a>\n    </div>`;\n  });\n}\n\n// 投資小知識(財金名詞)\nconst tip = ai.investment_tip || (ai.investment_tips ? { concept: '投資小知識', detail: ai.investment_tips } : null);\nif (tip) {\n  html += sec('IV', '每日投資小知識');\n  html += `<div style=\"padding:6px 2px 2px;\">\n    ${tip.concept ? `<div style=\"font-size:16px;font-weight:700;color:${ink};margin-bottom:6px;\">${esc(tip.concept)}</div>` : ''}\n    <div style=\"font-size:14px;color:${sub};line-height:2.0;\">${esc(tip.detail || '')}</div>\n  </div>`;\n}\n\nhtml += `<div style=\"text-align:center;margin-top:38px;padding-top:18px;border-top:1px solid ${rule};\">\n  <div style=\"font-size:12px;color:${faint};line-height:1.9;\">本電子報於每個交易日盤後自動寄送，內容僅供參考，<br/><span style=\"color:${up};font-weight:700;\">投資請自負風險</span>。</div>\n  <div style=\"font-size:13px;color:${ink};font-weight:700;letter-spacing:3px;margin-top:14px;\">黃柏郡　Po-Chun Huang</div>\n</div>\n\n</div></body></html>`;\n\nreturn [{ json: { html, subject: 'Brian 股票推播' } }];\n"
+      }
+    },
+    {
+      "id": "split-recipients",
+      "name": "分割收件人",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2240,
+        300
+      ],
+      "parameters": {
+        "jsCode": "// 只有交易日才寄(非交易日 / 休市日回傳空陣列，寄信節點就不會執行)\n// 手動測試可用環境變數 FORCE_SEND=1 強制寄送(正式排程不設此變數，不受影響)\nconst isTradingDay = (() => { try { return $('整理分類行情').first().json.isTradingDay; } catch (e) { return true; } })();\nconst force = (() => { try { return $env.FORCE_SEND === '1'; } catch (e) { return false; } })();\nif (!isTradingDay && !force) {\n  return [];\n}\n\nconst recipients = ['YOUR_EMAIL@gmail.com'];\nconst html = $input.first().json.html;\nconst subject = $input.first().json.subject;\nreturn recipients.map(to => ({\n  json: { html, subject, toEmail: to, bccEmails: recipients.filter(r => r !== to) }\n}));\n"
+      }
+    },
+    {
+      "id": "send-email",
+      "name": "寄送郵件 (BCC)",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        2440,
+        300
+      ],
+      "parameters": {
+        "fromEmail": "Brian 股票推薦達人 <YOUR_EMAIL@gmail.com>",
+        "toEmail": "={{ $json.toEmail }}",
+        "ccEmail": "",
+        "bccEmail": "={{ $json.bccEmails.join(\",\") }}",
+        "subject": "={{ $json.subject }}",
+        "emailFormat": "html",
+        "html": "={{ $json.html }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "credentials": {
+        "smtp": {
+          "id": "gmailsmtp0001",
+          "name": "Gmail SMTP"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "每日排程": {
+      "main": [
+        [
+          {
+            "node": "定義分類標的",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "手動測試": {
+      "main": [
+        [
+          {
+            "node": "定義分類標的",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "定義分類標的": {
+      "main": [
+        [
+          {
+            "node": "抓取行情",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "抓取行情": {
+      "main": [
+        [
+          {
+            "node": "整理分類行情",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "整理分類行情": {
+      "main": [
+        [
+          {
+            "node": "抓三大法人",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "抓三大法人": {
+      "main": [
+        [
+          {
+            "node": "定義技術標的",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "定義技術標的": {
+      "main": [
+        [
+          {
+            "node": "抓技術歷史",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "抓技術歷史": {
+      "main": [
+        [
+          {
+            "node": "算技術與法人",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "算技術與法人": {
+      "main": [
+        [
+          {
+            "node": "搜尋台股新聞",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "搜尋台股新聞": {
+      "main": [
+        [
+          {
+            "node": "整合資料",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "整合資料": {
+      "main": [
+        [
+          {
+            "node": "Groq AI 分析",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq AI 分析": {
+      "main": [
+        [
+          {
+            "node": "生成雜誌風 HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "生成雜誌風 HTML": {
+      "main": [
+        [
+          {
+            "node": "分割收件人",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "分割收件人": {
+      "main": [
+        [
+          {
+            "node": "寄送郵件 (BCC)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  }
+}
