@@ -21,7 +21,7 @@
 <rect x="46" y="146" width="6" height="62" rx="3" fill="#ff6d5a"/>
 <rect x="62" y="159" width="14" height="14" rx="4" fill="#ff6d5a"/>
 <text x="86" y="170" font-size="13.5" font-weight="700" fill="#1a1f36">每日排程</text>
-<text x="86" y="188" font-size="10.5" fill="#6b7280">Schedule Trigger · 16:00</text>
+<text x="86" y="188" font-size="10.5" fill="#6b7280" textLength="140" lengthAdjust="spacingAndGlyphs">Schedule Trigger · 16:00</text>
 <text x="224" y="164" font-size="8.5" font-weight="700" fill="#ff6d5a" text-anchor="end" letter-spacing="0.5">TRIGGER</text>
 <g filter="url(#sh)"><rect x="46" y="326" width="188" height="62" rx="10" fill="#ffffff" stroke="#e3e5ec"/></g>
 <rect x="46" y="326" width="6" height="62" rx="3" fill="#ff9f43"/>
@@ -45,7 +45,7 @@
 <rect x="666" y="236" width="6" height="62" rx="3" fill="#5b67f0"/>
 <rect x="682" y="249" width="14" height="14" rx="4" fill="#5b67f0"/>
 <text x="706" y="260" font-size="13.5" font-weight="700" fill="#1a1f36">整理分類行情</text>
-<text x="706" y="278" font-size="10.5" fill="#6b7280">Organize · ZH names, trading-day</text>
+<text x="706" y="278" font-size="10.5" fill="#6b7280" textLength="140" lengthAdjust="spacingAndGlyphs">Organize · ZH names, trading-day</text>
 <text x="844" y="254" font-size="8.5" font-weight="700" fill="#5b67f0" text-anchor="end" letter-spacing="0.5">CODE</text>
 <g filter="url(#sh)"><rect x="866" y="46" width="188" height="62" rx="10" fill="#ffffff" stroke="#e3e5ec"/></g>
 <rect x="866" y="46" width="6" height="62" rx="3" fill="#8b5cf6"/>
@@ -81,7 +81,7 @@
 <rect x="1466" y="146" width="6" height="62" rx="3" fill="#5b67f0"/>
 <rect x="1482" y="159" width="14" height="14" rx="4" fill="#5b67f0"/>
 <text x="1506" y="170" font-size="13.5" font-weight="700" fill="#1a1f36">整合資料</text>
-<text x="1506" y="188" font-size="10.5" fill="#6b7280">Integrate · build prompt</text>
+<text x="1506" y="188" font-size="10.5" fill="#6b7280" textLength="140" lengthAdjust="spacingAndGlyphs">Integrate · build prompt</text>
 <text x="1644" y="164" font-size="8.5" font-weight="700" fill="#5b67f0" text-anchor="end" letter-spacing="0.5">CODE</text>
 <g filter="url(#sh)"><rect x="1666" y="146" width="188" height="62" rx="10" fill="#ffffff" stroke="#e3e5ec"/></g>
 <rect x="1666" y="146" width="6" height="62" rx="3" fill="#8b5cf6"/>
