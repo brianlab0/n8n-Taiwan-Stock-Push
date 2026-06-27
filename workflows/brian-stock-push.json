@@ -265,7 +265,7 @@
         300
       ],
       "parameters": {
-        "fromEmail": "Brian 股票推薦達人 <YOUR_EMAIL@gmail.com>",
+        "fromEmail": "Brian 股票推播 <YOUR_EMAIL@gmail.com>",
         "toEmail": "={{ $json.toEmail }}",
         "ccEmail": "",
         "bccEmail": "={{ $json.bccEmails.join(\",\") }}",

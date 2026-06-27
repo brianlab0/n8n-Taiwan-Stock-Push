@@ -1,6 +1,6 @@
 # n8n Taiwan Stock Push (Brian 股票推播)
 
-An end-to-end automation that emails a **daily Taiwan-stock briefing** after every market close, built on the **n8n** workflow engine and self-hosted on **Docker** (Mac / Windows / Linux). It pulls live quotes, institutional flows, technicals, and news, then uses **Groq Llama 3.3 70B** to produce 10 buy + 10 sell diversified recommendations, per-stock rationale, news digests, and a daily finance term — delivered via **Gmail SMTP**.
+An end-to-end automation that emails a **daily Taiwan-stock briefing** after every market close, built on the **n8n** workflow engine and self-hosted on **Docker** (macOS / Windows / Linux). It pulls live quotes, institutional flows, technicals, and news, then uses **Groq Llama 3.3 70B** to produce 10 buy + 10 sell diversified recommendations, per-stock rationale, news digests, and a daily finance term — delivered via **Gmail SMTP**.
 
 > Note: The workflow JSON uses Chinese node names (e.g. `整理分類行情`, `整合資料`). The Code expressions reference these exact names via `$('整理分類行情')`. If you rename nodes after import, update the references too.
 
@@ -49,79 +49,159 @@ flowchart LR
     style Out fill:#f3e5f5
 ```
 
+### Pipeline Flow
+
+```mermaid
+flowchart TD
+    Trig(["Schedule / Manual Trigger"]) --> Uni["Define Universe"]
+    Uni --> Q["Yahoo: Fetch Quotes"]
+    Q --> Org["Organize · trading-day flag"]
+    Org --> Inst["TWSE: Institutions"]
+    Inst --> TD["Define Tech Symbols"] --> TH["Yahoo: 6mo History"] --> TC["MA / RSI + Institutions"]
+    TC --> News["Tavily: News"]
+    News --> Integ["Integrate · build prompt"]
+    Integ --> AI["Groq Llama 3.3 70B"]
+    AI --> HTML["Generate HTML"]
+    HTML --> Gate{"Trading day?"}
+    Gate -->|No| Stop(["No email"])
+    Gate -->|Yes| Mail["Gmail SMTP"] --> Done(["Inbox"])
+    style Trig fill:#c8e6c9
+    style Done fill:#c8e6c9
+    style AI fill:#fff9c4
+    style Gate fill:#ffcdd2
+    style Stop fill:#ffcdd2
+```
+
 ---
 
-## Data Sources
+## Tech Stack
 
-| Source | Purpose | Cost |
-|---|---|---|
-| Yahoo Finance Chart API | Real-time quotes + 6-month history | Free, no key |
-| TWSE Open Data (`BFI82U`) | Three-major-institution net buy/sell | Free, no key |
-| Tavily API | Recent Taiwan market news | Free tier |
-| Groq (`llama-3.3-70b-versatile`) | Recommendations, summaries, daily tip | Free tier |
-| Gmail SMTP | Email delivery | Free (App Password) |
+**Workflow** `n8n` `Cron / Schedule Trigger` `Code (JavaScript)` `HTTP Request`
+**Data** `Yahoo Finance API` `TWSE Open Data` `Tavily API`
+**LLM** `Groq` `Llama 3.3 70B`
+**Email** `Gmail SMTP` `App Password`
+**Infra** `Docker` `docker-compose`
 
 ---
 
-## Setup
-
-Works on **macOS, Windows, and Linux** — anywhere Docker Desktop runs.
-
-### Prerequisites
+## Prerequisites
 
 - Docker Desktop (macOS / Windows / Linux)
 - Groq API key (free) — https://console.groq.com
 - Tavily API key (free) — https://tavily.com
-- Gmail App Password (requires 2-Step Verification)
+- A Gmail account with an **App Password** (requires 2-Step Verification)
 
-### 1. Start n8n
+---
 
-Copy `docker-compose.example.yml` to `docker-compose.yml` and create an `.env` beside it (see `.env.example`):
+## Setup Guide
+
+### Phase 1: Environment Setup
+
+#### 1.1 Install Docker Desktop
+
+Install Docker Desktop for your OS and make sure it is running. The same commands below work on macOS, Windows (PowerShell / Windows Terminal), and Linux.
+
+#### 1.2 Create docker-compose.yml
+
+Copy `docker-compose.example.yml` to `docker-compose.yml`. It sets `N8N_BLOCK_ENV_ACCESS_IN_NODE=false` so Code / HTTP nodes can read `$env.GROQ_API_KEY` and `$env.TAVILY_API_KEY`:
+
+```yaml
+services:
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: n8n
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      - GENERIC_TIMEZONE=Asia/Taipei
+      - TZ=Asia/Taipei
+      - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
+    env_file:
+      - .env
+    volumes:
+      - n8n_data:/home/node/.n8n
+
+volumes:
+  n8n_data:
+```
+
+#### 1.3 Create .env
+
+Create an `.env` next to `docker-compose.yml` (see `.env.example`):
 
 ```
-GROQ_API_KEY=gsk_xxx
-TAVILY_API_KEY=tvly-xxx
+GROQ_API_KEY=gsk_your_key_here
+TAVILY_API_KEY=tvly_your_key_here
 ```
+
+#### 1.4 Launch
 
 ```bash
 docker compose up -d        # then open http://localhost:5678
 ```
 
-> Windows: run the same command in PowerShell or Windows Terminal after Docker Desktop is running. The compose file is cross-platform; no path changes are needed.
+Create your n8n owner account on first launch.
 
-The compose file sets `N8N_BLOCK_ENV_ACCESS_IN_NODE=false` so nodes can read `$env.GROQ_API_KEY` and `$env.TAVILY_API_KEY`.
+### Phase 2: API Credentials
 
-### 2. Gmail SMTP credential
+#### 2.1 Groq API Key
 
-In n8n create an **SMTP** credential named **Gmail SMTP**: host `smtp.gmail.com`, port `465`, SSL on, user = your Gmail, password = your **App Password**.
+Sign in at https://console.groq.com → API Keys → Create API Key. Paste it into `.env` as `GROQ_API_KEY`. The free tier allows 100,000 tokens/day — one daily run uses ~6,000.
 
-### 3. Import & run
+#### 2.2 Tavily API Key
 
-Import `workflows/brian-stock-push.json`, open **Email Send**, select the **Gmail SMTP** credential, and replace `YOUR_EMAIL@gmail.com` with your address (sender + recipient). Click **Test workflow** to send now, or set the workflow **Active** for the daily schedule. To force a send on a non-trading day for testing, run with `FORCE_SEND=1`.
+Sign up at https://tavily.com and copy your key into `.env` as `TAVILY_API_KEY`.
+
+#### 2.3 Gmail App Password
+
+Enable **2-Step Verification** on your Google account, then create an **App Password** (Google Account → Security → App passwords). You will use it as the SMTP password — not your normal Gmail password.
+
+### Phase 3: n8n Credential
+
+Create one **SMTP** credential in n8n (Credentials → New → SMTP), named **Gmail SMTP**:
+
+| Field | Value |
+|---|---|
+| Host | `smtp.gmail.com` |
+| Port | `465` |
+| SSL/TLS | on |
+| User | your Gmail address |
+| Password | your Gmail **App Password** |
+
+### Phase 4: Import & Configure
+
+1. Import `workflows/brian-stock-push.json` (Workflows → Import from File).
+2. Open **Node 15 — 寄送郵件 (BCC)**, select your **Gmail SMTP** credential, and replace `YOUR_EMAIL@gmail.com` (From) with your address.
+3. Open **Node 14 — 分割收件人** and set the `recipients` array to the address(es) you want to receive the briefing.
+4. Click **Test workflow** (Manual Trigger) to send immediately, or toggle the workflow **Active** to run on the daily schedule.
+
+> To force a send on a non-trading day while testing, run the workflow with the environment variable `FORCE_SEND=1` (the trading-day gate honors it).
 
 ---
 
-## Workflow Nodes
+## Workflow: brian-stock-push (15 nodes)
 
-| # | Node (ZH) | Type | Role |
-|---|---|---|---|
-| 1 | 每日排程 / 手動測試 | Trigger | Cron `0 16 * * 1-5` (Asia/Taipei) + manual test |
-| 2 | 定義分類標的 | Code | Stock universe (symbol + ZH name) |
-| 3 | 抓取行情 | HTTP | Yahoo Finance quotes (`range=1d`) |
-| 4 | 整理分類行情 | Code | Prices, % change, ZH names, **data date + trading-day flag** |
-| 5 | 抓三大法人 | HTTP | TWSE `BFI82U` institutional flows |
-| 6 | 定義技術標的 / 抓技術歷史 | Code + HTTP | 6-month history for MA/RSI |
-| 7 | 算技術與法人 | Code | MA5/20/60, RSI(14), institutions (`startsWith` parse) |
-| 8 | 搜尋台股新聞 | HTTP | Tavily news |
-| 9 | 整合資料 | Code | Build candidate list + Groq request body |
-| 10 | Groq AI 分析 | HTTP | Llama 3.3 70B → 10 buy / 10 sell + digests + tip |
-| 11 | 生成雜誌風 HTML | Code | LaTeX-style HTML, **grounded targets** |
-| 12 | 分割收件人 | Code | **Trading-day gate** (`FORCE_SEND=1` to override) |
-| 13 | 寄送郵件 (BCC) | Email | Gmail SMTP |
+Each node below is listed in execution order with its exact configuration. The five Code nodes contain the core logic; they are also embedded verbatim in `workflows/brian-stock-push.json`.
 
-The five Code nodes (the core logic) are below. They are also embedded in `workflows/brian-stock-push.json`.
+### Node 1: 每日排程 (Schedule Trigger)
 
-<details><summary><b>定義分類標的</b> — stock universe</summary>
+Fires the pipeline every weekday at 16:00 Asia/Taipei (after the 13:30 close).
+
+| Field | Value |
+|---|---|
+| Trigger Rule | Cron Expression |
+| Expression | `0 16 * * 1-5` (Mon–Fri 16:00) |
+
+### Node 2: 手動測試 (Manual Trigger)
+
+Manual trigger for on-demand test runs.
+
+No configuration — used only for testing.
+
+### Node 3: 定義分類標的 (Code in JavaScript)
+
+Emits the stock universe — 45+ symbols with their Chinese names — one item per stock.
 
 ```javascript
 // 選股池(代號 + 中文名)
@@ -175,9 +255,21 @@ const list = [
 ];
 return list.map(x => ({ json: x }));
 ```
-</details>
 
-<details><summary><b>整理分類行情</b> — quotes, ZH names, trading-day detection</summary>
+### Node 4: 抓取行情 (HTTP Request)
+
+Fetches the latest 1-day quote for each symbol from Yahoo Finance (runs once per input item).
+
+| Field | Value |
+|---|---|
+| Method | GET |
+| URL | `=https://query1.finance.yahoo.com/v8/finance/chart/{{ encodeURIComponent($json.symbol) }}?range=1d&interval=1d` |
+| Header | `User-Agent: Mozilla/5.0` |
+| On Error | Continue (regular output) |
+
+### Node 5: 整理分類行情 (Code in JavaScript)
+
+Parses quotes into price / % change with Chinese names and sector, and derives the **data date** and **trading-day flag** from the index timestamp (fixed UTC+8).
 
 ```javascript
 // 整理行情 + 中文名 + 正確資料日期/交易日判斷
@@ -290,9 +382,137 @@ if (lastMarketTime) {
 
 return [{ json: { marketData, categories, categoryStats, isTradingDay, dataDate, displayDate } }];
 ```
-</details>
 
-<details><summary><b>整合資料</b> — candidate list + Groq prompt</summary>
+### Node 6: 抓三大法人 (HTTP Request)
+
+Fetches three-major-institution net buy/sell totals from the TWSE open data for the data date.
+
+| Field | Value |
+|---|---|
+| Method | GET |
+| URL | `=https://www.twse.com.tw/rwd/zh/fund/BFI82U?dayDate={{ $('整理分類行情').first().json.dataDate.split('-').join('') }}&type=day&response=json` |
+| Header | `User-Agent: Mozilla/5.0` |
+| On Error | Continue (regular output) |
+
+### Node 7: 定義技術標的 (Code in JavaScript)
+
+Emits the three symbols used for technical indicators (index, TSMC, 0050).
+
+```javascript
+// 要做技術分析的標的(抓 6 個月歷史來算均線 / RSI)
+const list = [
+  { symbol: '^TWII',   name: '台股加權' },
+  { symbol: '2330.TW', name: '台積電' },
+  { symbol: '0050.TW', name: '元大台灣50' },
+];
+return list.map(x => ({ json: x }));
+```
+
+### Node 8: 抓技術歷史 (HTTP Request)
+
+Fetches 6 months of daily history for the technical symbols from Yahoo Finance.
+
+| Field | Value |
+|---|---|
+| Method | GET |
+| URL | `=https://query1.finance.yahoo.com/v8/finance/chart/{{ encodeURIComponent($json.symbol) }}?range=6mo&interval=1d` |
+| Header | `User-Agent: Mozilla/5.0` |
+| On Error | Continue (regular output) |
+
+### Node 9: 算技術與法人 (Code in JavaScript)
+
+Computes MA5/20/60 and RSI(14), and parses the institutional totals (note the `startsWith` parse so `外資及陸資(不含外資自營商)` is counted as foreign, not dealer).
+
+```javascript
+const techSymbols = $input.all();
+const fac = (() => {
+  try {
+    const facData = $('抓三大法人').first().json;
+    const rows = facData && facData.data;
+    if (!Array.isArray(rows) || rows.length === 0) return null;
+    const num = (s) => Number(String(s == null ? '' : s).replace(/,/g, '')) || 0;
+    let dealer = 0, trust = 0, foreign = 0;
+    for (const r of rows) {
+      const label = String(r[0] || '');
+      const net = num(r[3]);
+      if (label.indexOf('合計') === 0) continue;
+      if (label.indexOf('外資') === 0) foreign += net;
+      else if (label.indexOf('投信') === 0) trust += net;
+      else if (label.indexOf('自營商') === 0) dealer += net;
+    }
+    const oku = (v) => Number((v / 1e8).toFixed(2));
+    if (foreign === 0 && trust === 0 && dealer === 0) return null;
+    return { foreign: oku(foreign), trust: oku(trust), dealer: oku(dealer),
+             total: oku(foreign + trust + dealer) };
+  } catch (e) { return null; }
+})();
+
+const tech = [];
+for (const item of techSymbols) {
+  try {
+    const result = item.json.chart.result[0];
+    const closes = result.indicators.quote[0].close.filter(c => c);
+    const meta = result.meta;
+    
+    if (closes.length < 60) continue;
+    
+    const ma5 = (closes.slice(-5).reduce((a,b) => a+b, 0) / 5).toFixed(0);
+    const ma20 = (closes.slice(-20).reduce((a,b) => a+b, 0) / 20).toFixed(0);
+    const ma60 = (closes.slice(-60).reduce((a,b) => a+b, 0) / 60).toFixed(0);
+    
+    const rsi = (() => {
+      const n = 14;
+      let gains = 0, losses = 0;
+      for (let i = closes.length - n; i < closes.length; i++) {
+        const diff = closes[i] - closes[i-1];
+        if (diff > 0) gains += diff;
+        else losses -= diff;
+      }
+      const rs = losses > 0 ? gains / losses : gains > 0 ? 100 : 0;
+      return 100 - (100 / (1 + rs));
+    })();
+    
+    tech.push({
+      name: meta.symbol,
+      price: closes[closes.length - 1],
+      ma5, ma20, ma60,
+      rsi,
+      trend: ma5 > ma20 && ma20 > ma60 ? '多頭排列' : '空頭排列'
+    });
+  } catch (e) {}
+}
+
+return [{ json: { tech, fac } }];
+```
+
+### Node 10: 搜尋台股新聞 (HTTP Request)
+
+Searches recent Taiwan market news via Tavily.
+
+| Field | Value |
+|---|---|
+| Method | POST |
+| URL | `https://api.tavily.com/search` |
+| Header | `Content-Type: application/json` |
+| Send Body | on · JSON |
+| On Error | Continue (regular output) |
+
+JSON Body:
+
+```
+={
+  "api_key": "{{ $env.TAVILY_API_KEY }}",
+  "query": "台股 加權指數 台積電 法人買賣 盤勢 投資 股票",
+  "topic": "news",
+  "search_depth": "advanced",
+  "max_results": 10,
+  "days": 3
+}
+```
+
+### Node 11: 整合資料 (Code in JavaScript)
+
+Builds the candidate list (with real prices) and the Groq request body — the prompt asks for 10 diversified buys + 10 sells, per-stock rationale, news digests, and a daily finance term.
 
 ```javascript
 const market = $('整理分類行情').first().json;
@@ -366,9 +586,29 @@ return [{
   }
 }];
 ```
-</details>
 
-<details><summary><b>生成雜誌風 HTML</b> — LaTeX-style email + grounded targets</summary>
+### Node 12: Groq AI 分析 (HTTP Request)
+
+Calls Groq Llama 3.3 70B and returns the analysis as JSON. `Retry On Fail` is on for transient 429s.
+
+| Field | Value |
+|---|---|
+| Method | POST |
+| URL | `https://api.groq.com/openai/v1/chat/completions` |
+| Header | `Authorization: ={{ 'Bearer ' + $env.GROQ_API_KEY }}` |
+| Header | `Content-Type: application/json` |
+| Send Body | on · JSON |
+| Retry On Fail | on (max 3) |
+
+JSON Body:
+
+```
+={{ JSON.stringify($json.requestBody) }}
+```
+
+### Node 13: 生成雜誌風 HTML (Code in JavaScript)
+
+Renders the LaTeX-style HTML email. Target / stop-loss are computed from the real current price (+8% / -6%) — the AI never sets price levels.
 
 ```javascript
 const md = $('整理分類行情').first().json;
@@ -474,9 +714,10 @@ html += `<div style="text-align:center;margin-top:38px;padding-top:18px;border-t
 
 return [{ json: { html, subject: 'Brian 股票推播' } }];
 ```
-</details>
 
-<details><summary><b>分割收件人</b> — trading-day gate</summary>
+### Node 14: 分割收件人 (Code in JavaScript)
+
+Trading-day gate + recipient fan-out. Returns an empty list on non-trading days (unless `FORCE_SEND=1`), so the Email node does not run.
 
 ```javascript
 // 只有交易日才寄(非交易日 / 休市日回傳空陣列，寄信節點就不會執行)
@@ -487,31 +728,57 @@ if (!isTradingDay && !force) {
   return [];
 }
 
-const recipients = ['a08284700711@gmail.com'];
+const recipients = ['YOUR_EMAIL@gmail.com'];
 const html = $input.first().json.html;
 const subject = $input.first().json.subject;
 return recipients.map(to => ({
   json: { html, subject, toEmail: to, bccEmails: recipients.filter(r => r !== to) }
 }));
 ```
-</details>
+
+### Node 15: 寄送郵件 (BCC) (Email Send)
+
+Sends the HTML email via Gmail SMTP.
+
+| Field | Value |
+|---|---|
+| From | `Brian 股票推播 <YOUR_EMAIL@gmail.com>` |
+| To | `={{ $json.toEmail }}` |
+| BCC | `={{ $json.bccEmails.join(",") }}` |
+| Subject | `={{ $json.subject }}` |
+| Email Format | HTML |
+| HTML | `={{ $json.html }}` |
+| Credential | Gmail SMTP |
+| Options | Append n8n Attribution: off |
+
+### Final Connections
+
+- `每日排程` → `定義分類標的`
+- `手動測試` → `定義分類標的`
+- `定義分類標的` → `抓取行情`
+- `抓取行情` → `整理分類行情`
+- `整理分類行情` → `抓三大法人`
+- `抓三大法人` → `定義技術標的`
+- `定義技術標的` → `抓技術歷史`
+- `抓技術歷史` → `算技術與法人`
+- `算技術與法人` → `搜尋台股新聞`
+- `搜尋台股新聞` → `整合資料`
+- `整合資料` → `Groq AI 分析`
+- `Groq AI 分析` → `生成雜誌風 HTML`
+- `生成雜誌風 HTML` → `分割收件人`
+- `分割收件人` → `寄送郵件 (BCC)`
+
+Both the Schedule Trigger and the Manual Trigger feed **定義分類標的**, so a manual test runs the exact same pipeline as the scheduled job.
 
 ---
 
-## Scheduling & Trading-Day Logic
+## Testing
 
-- Schedule Trigger cron: `0 16 * * 1-5` (weekdays 16:00, Asia/Taipei).
-- `整理分類行情` reads the index `regularMarketTime`, converts to a Taipei date (fixed UTC+8), and sets `isTradingDay = (data date === today)`. On weekends/holidays the market never traded "today" → flag is false.
-- `分割收件人` returns an empty list when `isTradingDay` is false (unless `FORCE_SEND=1`), so the Email node does not run. You only receive a briefing on real trading days.
+1. Open the workflow and click **Test workflow** (the Manual Trigger).
+2. Watch each node turn green. `抓取行情` runs 45+ times (once per symbol); a few symbols may return non-200 — that is fine, those nodes are set to *Continue On Error*.
+3. Check your inbox for **Brian 股票推播**.
 
----
-
-## Customization
-
-- **Universe** — edit `定義分類標的` and the matching `UNIVERSE` array (symbol → name → sector) in `整理分類行情`.
-- **Send time** — change the Schedule Trigger cron.
-- **Recipients** — edit the array in `分割收件人`.
-- **Number of ideas / tone** — edit the system prompt in `整合資料`.
+To test the trading-day gate on a weekend/holiday, run with `FORCE_SEND=1`; without it, `分割收件人` returns nothing and no email is sent.
 
 ---
 
@@ -519,10 +786,12 @@ return recipients.map(to => ({
 
 | Issue | Solution |
 |---|---|
-| Groq `429 ... tokens per day (TPD): Limit 100000` | Free daily token budget exhausted (usually rapid testing). One daily run uses ~6,000 tokens; resets daily. |
+| Groq `429 ... tokens per day (TPD): Limit 100000` | Free daily token budget exhausted (usually from rapid testing). One daily run uses ~6,000 tokens; resets daily. Space out manual tests. |
 | Email "No recipients defined" | `toEmail` / `subject` / `bccEmail` must be expressions starting with `=` (e.g. `={{ $json.toEmail }}`). |
 | Institutional foreign = 0 | The TWSE label `外資及陸資(不含外資自營商)` contains `自營商`; parse with `startsWith`, not `includes`. |
 | Category shows `2330.TW` not 台積電 | A symbol is missing from the `UNIVERSE` name map in `整理分類行情`. |
+| No email on a weekday | Was it a national holiday? The market was closed → the trading-day gate skipped it. |
+| `$env.GROQ_API_KEY` is empty | Set `N8N_BLOCK_ENV_ACCESS_IN_NODE=false` in the compose file and recreate the container. |
 
 ---
 
