@@ -76,11 +76,14 @@ flowchart TD
 
 ## Tech Stack
 
-**Workflow** `n8n` `Cron / Schedule Trigger` `Code (JavaScript)` `HTTP Request`
-**Data** `Yahoo Finance API` `TWSE Open Data` `Tavily API`
-**LLM** `Groq` `Llama 3.3 70B`
-**Email** `Gmail SMTP` `App Password`
-**Infra** `Docker` `docker-compose`
+| Layer | Tools |
+|---|---|
+| Workflow Engine | n8n (self-hosted) |
+| Container | Docker, docker-compose |
+| AI | Groq (llama-3.3-70b-versatile) |
+| Data APIs | Yahoo Finance Chart API, TWSE Open Data (BFI82U), Tavily Search API |
+| Email | Gmail SMTP (App Password) |
+| Auth | Bearer Token, Header Auth |
 
 ---
 
